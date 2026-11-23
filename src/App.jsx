@@ -3,19 +3,19 @@ import Dog from './components/Dog'
 import { Canvas } from '@react-three/fiber'
 
 function App() {
-
+  const BASE = import.meta.env.BASE_URL;
 
   return (
     <>
       <main>
         <div className="images">
-          <img id='tomorrowland' src="/tommorowland.png" alt="" />
-          <img id='navy-pier' src="/navy-pier.png" alt="" />
-          <img id='msi-chicago' src="/msi-chicago.png" alt="" />
-          <img id='phone' src="/phone.png" alt="" />
-          <img id='kikk' src="/kikk.png" alt="" />
-          <img id='kennedy' src="/kennedy.png" alt="" />
-          <img id='opera' src="/opera.png" alt="" />
+          <img id='tomorrowland' src={`${BASE}tommorowland.png`} alt="" />
+          <img id='navy-pier' src={`${BASE}navy-pier.png`} alt="" />
+          <img id='msi-chicago' src={`${BASE}msi-chicago.png`} alt="" />
+          <img id='phone' src={`${BASE}phone.png`} alt="" />
+          <img id='kikk' src={`${BASE}kikk.png`} alt="" />
+          <img id='kennedy' src={`${BASE}kennedy.png`} alt="" />
+          <img id='opera' src={`${BASE}opera.png`} alt="" />
         </div>
         <Canvas
           id='canvas-elem'
@@ -26,6 +26,7 @@ function App() {
             top: 0,
             left: 0,
             zIndex: 1,
+            '--bg-image': `url(${BASE}background-l.png)`
           }} >
           <Dog />
         </Canvas>
