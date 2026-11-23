@@ -18,8 +18,20 @@ const Dog = () => {
 
     const model = useGLTF(`${BASE}models/dog.drc.glb`)
 
-    useThree(({ camera, scene, gl }) => {
-        camera.position.z = 0.55
+    const { size } = useThree()
+    const isMobile = size.width < 768
+    const isTablet = size.width >= 768 && size.width < 1024
+
+    useThree(({ camera, gl }) => {
+        const aspect = size.width / size.height
+        if (isMobile) {
+            camera.position.z = Math.max(0.65, 0.65 * (1 / Math.max(aspect, 0.45)) * 0.6)
+        } else if (isTablet) {
+            camera.position.z = 0.6
+        } else {
+            camera.position.z = 0.55
+        }
+        camera.updateProjectionMatrix()
         gl.toneMapping = THREE.ReinhardToneMapping
         gl.outputColorSpace = THREE.SRGBColorSpace
     })
@@ -27,7 +39,7 @@ const Dog = () => {
     const { actions } = useAnimations(model.animations, model.scene)
 
     useEffect(() => {
-        actions[ "Take 001" ].play()
+        actions[ "Take 001" ]?.play()
     }, [ actions ])
 
 
@@ -152,151 +164,153 @@ const Dog = () => {
 
     const dogModel = useRef(model)
 
-
     useGSAP(() => {
+        const mm = gsap.matchMedia()
 
-        const tl = gsap.timeline({
-            scrollTrigger: {
-                trigger: "#section-1",
-                endTrigger: "#section-3",
-                start: "top top",
-                end: "bottom bottom",
-                markers: true,
-                scrub: true
-            }
+        // Desktop & Tablet Landscape
+        mm.add("(min-width: 768px)", () => {
+            const tl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: "#section-1",
+                    endTrigger: "#section-3",
+                    start: "top top",
+                    end: "bottom bottom",
+                    markers: false,
+                    scrub: true
+                }
+            })
+
+            tl
+                .to(dogModel.current.scene.position, {
+                    z: "-=0.75",
+                    y: "+=0.1"
+                })
+                .to(dogModel.current.scene.rotation, {
+                    x: `+=${Math.PI / 15}`
+                })
+                .to(dogModel.current.scene.rotation, {
+                    y: `-=${Math.PI}`,
+                }, "third")
+                .to(dogModel.current.scene.position, {
+                    x: "-=0.5",
+                    z: "+=0.6",
+                    y: "-=0.05"
+                }, "third")
         })
 
-        tl
-            .to(dogModel.current.scene.position, {
-                z: "-=0.75",
-                y: "+=0.1"
+        // Mobile (Portrait / small screens)
+        mm.add("(max-width: 767px)", () => {
+            const tl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: "#section-1",
+                    endTrigger: "#section-3",
+                    start: "top top",
+                    end: "bottom bottom",
+                    markers: false,
+                    scrub: true
+                }
             })
-            .to(dogModel.current.scene.rotation, {
-                x: `+=${Math.PI / 15}`
-            })
-            .to(dogModel.current.scene.rotation, {
-                y: `-=${Math.PI}`,
 
-            }, "third")
-            .to(dogModel.current.scene.position, {
-                x: "-=0.5",
-                z: "+=0.6",
-                y: "-=0.05"
-            }, "third")
+            tl
+                .to(dogModel.current.scene.position, {
+                    z: "-=0.45",
+                    y: "+=0.05"
+                })
+                .to(dogModel.current.scene.rotation, {
+                    x: `+=${Math.PI / 15}`
+                })
+                .to(dogModel.current.scene.rotation, {
+                    y: `-=${Math.PI}`,
+                }, "third")
+                .to(dogModel.current.scene.position, {
+                    x: "-=0.15",
+                    z: "+=0.35",
+                    y: "-=0.03"
+                }, "third")
+        })
 
-    }, [])
+        return () => mm.revert()
+    }, [size.width])
 
     useEffect(() => {
-
-        document.querySelector(`.title[img-title="tomorrowland"]`).addEventListener("mouseenter", () => {
-            material.current.uMatcap1.value = mat19
+        const applyMatcap = (targetMat) => {
+            material.current.uMatcap1.value = targetMat
             gsap.to(material.current.uProgress, {
                 value: 0.0,
-                duration: 0.3,
+                duration: 0.35,
                 onComplete: () => {
                     material.current.uMatcap2.value = material.current.uMatcap1.value
                     material.current.uProgress.value = 1.0
                 }
             })
-        })
-        document.querySelector(`.title[img-title="navy-pier"]`).addEventListener("mouseenter", () => {
+        }
 
-            material.current.uMatcap1.value = mat8
-            
-            gsap.to(material.current.uProgress, {
-                value: 0.0,
-                duration: 0.3,
-                onComplete: () => {
-                    material.current.uMatcap2.value = material.current.uMatcap1.value
-                    material.current.uProgress.value = 1.0
-                }
-            })
-        })
-        document.querySelector(`.title[img-title="msi-chicago"]`).addEventListener("mouseenter", () => {
+        const projectItems = [
+            { key: "tomorrowland", mat: mat19 },
+            { key: "navy-pier", mat: mat8 },
+            { key: "msi-chicago", mat: mat9 },
+            { key: "phone", mat: mat12 },
+            { key: "kikk", mat: mat10 },
+            { key: "kennedy", mat: mat8 },
+            { key: "opera", mat: mat13 },
+        ]
 
-            material.current.uMatcap1.value = mat9
-            
-            gsap.to(material.current.uProgress, {
-                value: 0.0,
-                duration: 0.3,
-                onComplete: () => {
-                    material.current.uMatcap2.value = material.current.uMatcap1.value
-                    material.current.uProgress.value = 1.0
-                }
-            })
-        })
-        document.querySelector(`.title[img-title="phone"]`).addEventListener("mouseenter", () => {
+        const cleanups = []
 
-            material.current.uMatcap1.value = mat12
-            
-            gsap.to(material.current.uProgress, {
-                value: 0.0,
-                duration: 0.3,
-                onComplete: () => {
-                    material.current.uMatcap2.value = material.current.uMatcap1.value
-                    material.current.uProgress.value = 1.0
-                }
-            })
-        })
-        document.querySelector(`.title[img-title="kikk"]`).addEventListener("mouseenter", () => {
+        const setActiveItem = (el, mat) => {
+            document.querySelectorAll(".title").forEach(t => t.classList.remove("active"))
+            if (el) el.classList.add("active")
+            applyMatcap(mat)
+        }
 
-            material.current.uMatcap1.value = mat10
-            
-            gsap.to(material.current.uProgress, {
-                value: 0.0,
-                duration: 0.3,
-                onComplete: () => {
-                    material.current.uMatcap2.value = material.current.uMatcap1.value
-                    material.current.uProgress.value = 1.0
-                }
-            })
-        })
-        document.querySelector(`.title[img-title="kennedy"]`).addEventListener("mouseenter", () => {
+        projectItems.forEach(({ key, mat }) => {
+            const el = document.querySelector(`.title[img-title="${key}"]`)
+            if (!el) return
 
-            material.current.uMatcap1.value = mat8
-            
-            gsap.to(material.current.uProgress, {
-                value: 0.0,
-                duration: 0.3,
-                onComplete: () => {
-                    material.current.uMatcap2.value = material.current.uMatcap1.value
-                    material.current.uProgress.value = 1.0
-                }
-            })
-        })
-        document.querySelector(`.title[img-title="opera"]`).addEventListener("mouseenter", () => {
+            const onEnter = () => setActiveItem(el, mat)
+            const onClick = (e) => {
+                e.stopPropagation()
+                setActiveItem(el, mat)
+            }
 
-            material.current.uMatcap1.value = mat13
-            
-            gsap.to(material.current.uProgress, {
-                value: 0.0,
-                duration: 0.3,
-                onComplete: () => {
-                    material.current.uMatcap2.value = material.current.uMatcap1.value
-                    material.current.uProgress.value = 1.0
-                }
-            })
-        })
-        document.querySelector(`.titles`).addEventListener("mouseleave", () => {
-
-            material.current.uMatcap1.value = mat2
-            
-            gsap.to(material.current.uProgress, {
-                value: 0.0,
-                duration: 0.3,
-                onComplete: () => {
-                    material.current.uMatcap2.value = material.current.uMatcap1.value
-                    material.current.uProgress.value = 1.0
-                }
+            el.addEventListener("mouseenter", onEnter)
+            el.addEventListener("click", onClick)
+            cleanups.push(() => {
+                el.removeEventListener("mouseenter", onEnter)
+                el.removeEventListener("click", onClick)
             })
         })
 
-    }, [])
+        const titlesContainer = document.querySelector(".titles")
+        if (titlesContainer) {
+            const onLeave = () => {
+                document.querySelectorAll(".title").forEach(t => t.classList.remove("active"))
+                applyMatcap(mat2)
+            }
+            titlesContainer.addEventListener("mouseleave", onLeave)
+            cleanups.push(() => titlesContainer.removeEventListener("mouseleave", onLeave))
+        }
 
+        const onDocClick = (e) => {
+            if (!e.target.closest(".title")) {
+                document.querySelectorAll(".title").forEach(t => t.classList.remove("active"))
+                applyMatcap(mat2)
+            }
+        }
+        document.addEventListener("click", onDocClick)
+        cleanups.push(() => document.removeEventListener("click", onDocClick))
+
+        return () => {
+            cleanups.forEach(fn => fn())
+        }
+    }, [mat19, mat8, mat9, mat12, mat10, mat13, mat2])
+
+    const initialPos = isMobile ? [ 0, -0.42, 0 ] : (isTablet ? [ 0.15, -0.5, 0 ] : [ 0.25, -0.55, 0 ])
+    const scale = isMobile ? 0.8 : (isTablet ? 0.9 : 1)
 
     return (
         <>
-            <primitive object={model.scene} position={[ 0.25, -0.55, 0 ]} rotation={[ 0, Math.PI / 3.9, 0 ]} />
+            <primitive object={model.scene} position={initialPos} scale={scale} rotation={[ 0, Math.PI / 3.9, 0 ]} />
             <directionalLight position={[ 0, 5, 5 ]} color={0xFFFFFF} intensity={10} />
         </>
     )
