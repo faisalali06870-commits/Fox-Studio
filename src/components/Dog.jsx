@@ -18,23 +18,25 @@ const Dog = () => {
 
     const model = useGLTF(`${BASE}models/dog.drc.glb`)
 
-    const { size } = useThree()
+    const { camera, size, gl } = useThree()
     const isMobile = size.width < 768
     const isTablet = size.width >= 768 && size.width < 1024
 
-    useThree(({ camera, gl }) => {
-        const aspect = size.width / size.height
+    const initialPos = isMobile ? [ 0, -0.22, 0 ] : (isTablet ? [ 0.12, -0.45, 0 ] : [ 0.25, -0.55, 0 ])
+    const initialScale = isMobile ? 0.58 : (isTablet ? 0.8 : 1)
+
+    useEffect(() => {
         if (isMobile) {
-            camera.position.z = Math.max(0.65, 0.65 * (1 / Math.max(aspect, 0.45)) * 0.6)
+            camera.position.set(0, 0, 0.65)
         } else if (isTablet) {
-            camera.position.z = 0.6
+            camera.position.set(0, 0, 0.58)
         } else {
-            camera.position.z = 0.55
+            camera.position.set(0, 0, 0.55)
         }
         camera.updateProjectionMatrix()
         gl.toneMapping = THREE.ReinhardToneMapping
         gl.outputColorSpace = THREE.SRGBColorSpace
-    })
+    }, [size.width, size.height, camera, gl, isMobile, isTablet])
 
     const { actions } = useAnimations(model.animations, model.scene)
 
@@ -169,6 +171,10 @@ const Dog = () => {
 
         // Desktop & Tablet Landscape
         mm.add("(min-width: 768px)", () => {
+            dogModel.current.scene.position.set(0.25, -0.55, 0)
+            dogModel.current.scene.scale.setScalar(1)
+            dogModel.current.scene.rotation.set(0, Math.PI / 3.9, 0)
+
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: "#section-1",
@@ -200,6 +206,10 @@ const Dog = () => {
 
         // Mobile (Portrait / small screens)
         mm.add("(max-width: 767px)", () => {
+            dogModel.current.scene.position.set(0, -0.22, 0)
+            dogModel.current.scene.scale.setScalar(0.58)
+            dogModel.current.scene.rotation.set(0, Math.PI / 3.9, 0)
+
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: "#section-1",
@@ -213,8 +223,8 @@ const Dog = () => {
 
             tl
                 .to(dogModel.current.scene.position, {
-                    z: "-=0.45",
-                    y: "+=0.05"
+                    z: "-=0.35",
+                    y: "+=0.06"
                 })
                 .to(dogModel.current.scene.rotation, {
                     x: `+=${Math.PI / 15}`
@@ -223,14 +233,14 @@ const Dog = () => {
                     y: `-=${Math.PI}`,
                 }, "third")
                 .to(dogModel.current.scene.position, {
-                    x: "-=0.15",
-                    z: "+=0.35",
+                    x: "-=0.05",
+                    z: "+=0.25",
                     y: "-=0.03"
                 }, "third")
         })
 
         return () => mm.revert()
-    }, [size.width])
+    }, [size.width, isMobile])
 
     useEffect(() => {
         const applyMatcap = (targetMat) => {
@@ -305,13 +315,12 @@ const Dog = () => {
         }
     }, [mat19, mat8, mat9, mat12, mat10, mat13, mat2])
 
-    const initialPos = isMobile ? [ 0, -0.42, 0 ] : (isTablet ? [ 0.15, -0.5, 0 ] : [ 0.25, -0.55, 0 ])
-    const scale = isMobile ? 0.8 : (isTablet ? 0.9 : 1)
-
     return (
         <>
-            <primitive object={model.scene} position={initialPos} scale={scale} rotation={[ 0, Math.PI / 3.9, 0 ]} />
+            <primitive object={model.scene} position={initialPos} scale={initialScale} rotation={[ 0, Math.PI / 3.9, 0 ]} />
+            <ambientLight intensity={1.8} />
             <directionalLight position={[ 0, 5, 5 ]} color={0xFFFFFF} intensity={10} />
+            <directionalLight position={[ -5, 2, 2 ]} color={0xFFFFFF} intensity={3} />
         </>
     )
 }
